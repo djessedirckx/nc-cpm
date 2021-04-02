@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>ActModel</title>
+<style type="text/css">
+body{
+		font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue",
+		 Helvetica, Arial, "Lucida Grande", sans-serif;
+	 padding : 15px;
+	 background-image: url('https://cdn.discordapp.com/attachments/712746665752133653/827521381938757632/unknown.png');
+}
+td {
+	 padding: 10px;
+	 vertical-align: top;
+}
+</style>
+
+<script src="./artistoo.js"></script>
+<script src="./fpsmeter.min.js"></script>
+<script>
+"use strict"
+
+/*	----------------------------------
+	CONFIGURATION SETTINGS
+	----------------------------------
+*/
+
+// Main parameters
+let cells = []
+let obstacle_cells = []
+let burnin_time = 50
+
+function compute_obstacle_perimeter(obstacle_volume) {
+	return (2*(Math.PI)*Math.cbrt((3*obstacle_volume)/(4*(Math.PI))))
+}
+
+// Parameter configuration
+let cell_volume = 500
+let obstacle_volume = cell_volume * 0.5
+let peri = compute_obstacle_perimeter(obstacle_volume)
+let obstacles = 16  						// needs to be a sqr number
+let grid_size = 200
+
+let rows = Math.sqrt(obstacles)
+let colums = rows
+let spacing = grid_size/(rows+1)
+
+
+let config = {
+
+	// Grid settings
+	ndim : 2,
+	field_size : [grid_size,grid_size],                 // Needs to be a grid for our spacing algorithm to work
+
+	// CPM parameters and configuration
+	conf : {
+		// Basic CPM parameters
+		torus : [true,true],						// Should the grid have linked borders?
+		seed : 1,							// Seed for random number generation.
+		T : 10,								// CPM temperature
+
+		// Constraint parameters.
+		// Mostly these have the format of an array in which each element specifies the
+		// parameter value for one of the cellkinds on the grid.
+		// First value is always cellkind 0 (the background) and is often not used.
+
+		// Adhesion parameters:
+		J: [[0,10, 10], 	// Background
+			[10,10,10], 	// Moving cell
+			[10,10,10]], 	// Obstacles (background-obstacle, cell-obstacle, obstacle-obstacle)
+
+		// VolumeConstraint parameters
+		LAMBDA_V: [0, 5, 1000],					// VolumeConstraint importance per cellkind
+		V: [0, cell_volume, obstacle_volume],	// Target volume of each cellkind
+
+		// PerimeterConstraint parameters
+		LAMBDA_P: [0, 2, 1000],						// PerimeterConstraint importance per cellkind
+		P : [0, 260, peri],							// Target perimeter of each cellkind
+
+		// ActivityConstraint parameters
+		LAMBDA_ACT : [0,300, 0],				// ActivityConstraint importance per cellkind
+		MAX_ACT : [0,30, 0],					// Activity memory duration per cellkind
+		ACT_MEAN : "geometric"					// Is neighborhood activity computed as a
+												// "geometric" or "arithmetic" mean?
+	},
+
+	// Simulation setup and configuration
+	simsettings : {
+
+		// Cells on the grid
+		NRCELLS : [5, obstacles],						// Number of cells to seed for all
+											// non-background cellkinds.
+		// Runtime etc
+		BURNIN : 500,
+		RUNTIME : 1000,
+		RUNTIME_BROWSER : "Inf",
+
+		// Visualization
+		CANVASCOLOR : "eaecef",
+		CELLCOLOR : ["000000","FF6347"],
+		ACTCOLOR : [true],					// Should pixel activity values be displayed?
+		SHOWBORDERS : [false],				// Should cellborders be displayed?
+		zoom : 2,							// zoom in on canvas with this factor.
+
+		// Output images
+		SAVEIMG : true,					// Should a png image of the grid be saved
+											// during the simulation?
+		IMGFRAMERATE : 1,					// If so, do this every <IMGFRAMERATE> MCS.
+		SAVEPATH : "output/img/ActModel",	// ... And save the image in this folder.
+		EXPNAME : "ActModel",					// Used for the filename of output images.
+
+		// Output stats etc
+		STATSOUT : { browser: false, node: true }, // Should stats be computed?
+		LOGRATE : 10							// Output stats every <LOGRATE> MCS.
+
+	}
+}
+/*	---------------------------------- */
+let sim, meter
+
+
+function initialize() {
+
+	let custommethods = {
+	   initializeGrid : initializeGrid,
+	   seedCell: seedCell
+	}
+
+	sim = new CPM.Simulation( config, custommethods )
+	meter = new FPSMeter({left:"auto", right:"5px"})
+	step()
+}
+
+function step(){
+	sim.step()
+	meter.tick()
+	if( sim.conf["RUNTIME_BROWSER"] == "Inf" | sim.time+1 < sim.conf["RUNTIME_BROWSER"] ){
+		requestAnimationFrame( step )
+	}
+}
+
+function calculate_obstacle_positions() {
+
+	let positions = new Array()
+	let counter = 0
+
+	let upperlimit = (rows + 1) * spacing
+
+	// Iterate over rows
+	for (let j = spacing; j < upperlimit; j += spacing) {
+
+		// Iterate over columns
+		for (let k = spacing; k < upperlimit; k += spacing) {
+			
+			positions[counter] = [Math.round(j), Math.round(k)]
+			counter++
+		}
+	}
+
+	return positions
+}
+
+// This is the same as the basic initializeGrid() function, but now we
+// also allow each cell to have a small burnin period just after seeding.
+function initializeGrid(){
+
+	// add the GridManipulator if not already there and if you need it
+	if( !this.helpClasses["gm"] ){ this.addGridManipulator() }
+
+
+	// CHANGE THE CODE BELOW TO FIT YOUR SIMULATION
+
+	let nrcells = this.conf["NRCELLS"], cellkind, i
+
+	let obstacle_positions = calculate_obstacle_positions()
+
+	// Seed the right number of cells for each cellkind
+	for( cellkind = 0; cellkind < nrcells.length; cellkind ++ ){
+
+		// console.log('cell length', nrcells.length)
+
+		for( i = 0; i < nrcells[cellkind]; i++ ){
+
+			// console.log('i', i)
+			// console.log('cellkind', cellkind)
+
+			// first cell always at the midpoint. Any other cells
+			// randomly.
+
+			// big blobs
+			if( cellkind == 0 ){
+				this.gm.seedCell( cellkind+1 )
+			}
+
+			if (cellkind == 1) {
+				// Initialize obstacles using a regularly spaced grid
+				this.gm.seedCellAt( cellkind+1, obstacle_positions[i] )
+			}
+
+			// if( cellkind == 1 ){
+			// 	this.gm.seedCellAt( cellkind+1, this.C.midpoint )
+			// } else {
+			// 	this.gm.seedCell( cellkind+1 )
+			// }
+		}
+	}
+}
+
+function seedCell( k ){
+	let x = sim.C.ran(0,grid_size), y = sim.C.ran(0,grid_size)
+	let cid = sim.C.makeNewCellID( k )
+	sim.C.setpix( [x,y], cid )
+	cells.push(cid)
+}
+
+function seedCells(){
+	let ncells = document.getElementById("addCell").value
+
+	for( let i = 0; i < ncells; i++ ){
+		seedCell(1)
+	}
+	for( let i = 0; i < burnin_time; i++ ){
+		sim.C.monteCarloStep()
+	}
+	if( sim.C.stop ){
+		draw()
+	}
+}
+
+function changeVolume() {
+	let newVolume = document.getElementById("changeVolume").value
+
+	sim.C.conf.V[1] = newVolume
+	sim.C.conf.V[2] = newVolume / 2
+
+	// Update obstacle perimeter
+	sim.C.conf.P[2] = compute_obstacle_perimeter(newVolume / 2)
+}
+
+function changePerimeter() {
+	let newPerimeter = document.getElementById("changePerimeter").value
+	sim.C.conf.P[1] = newPerimeter
+}
+
+function updateAOB() {
+	let newAOB = document.getElementById("obstacleBackground").value
+	sim.C.conf.J[2][0] = parseInt(newAOB)
+}
+
+function updateAOC() {
+	let value = document.getElementById("obstacleCell").value
+	sim.C.conf.J[2][1] = parseInt(value)
+}
+
+</script>
+</head>
+<body onload="initialize()">
+<h1>ActModel</h1>
+<p>
+
+ Model of migrating cells using static obstacles.
+</p>
+
+<div class="slidecontainer">
+
+	<table>
+		<tr>
+			<td>
+				<input type="text" id="addCell" value="5"></input>
+			</td>
+			<td>
+				<button onclick="seedCells()">Add cells</button>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<input type="text" id="changeVolume" value="500"></input>
+			</td>
+			<td>
+				<button onclick="changeVolume()">Change cell volume!</button>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<input type="text" id="changePerimeter" value="260"></input>
+			</td>
+			<td>
+				<button onclick="changePerimeter()">Change cell perimter!</button>
+			</td>
+		</tr>
+		<!-- <tr>
+			<td>
+				<select name="cars" id="cars">
+					<option value="4">2 x 2</option>
+					<option value="9">3 x 3</option>
+					<option value="16">4 x 4</option>
+					<option value="25">5 x 5</option>
+					<option value="36">6 x 6</option>
+					<option value="49">7 x 7</option>
+					<option value="64">8 x 8</option>
+				</select>
+			</td>
+			<td>
+				<button onclick="updateObstacles()">Update nr. of obstacles!</button>
+			</td>
+		</tr> -->
+		<tr>
+			<td>
+				<input type="text" id="obstacleBackground" value="10"></input> <!-- Watch out!!!! Could also be the other way around!! -->
+			</td>
+			<td>
+				<button onclick="updateAOB()">Update Adhesion Obstacle Background!</button>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<input type="text" id="obstacleCell" value="10"></input>
+			</td>
+			<td>
+				<button onclick="updateAOC()">Update Adhesion Obstacle Cell!</button>
+			</td>
+		</tr>
+	</table>
+</div>
+
+</body>
+</html>
