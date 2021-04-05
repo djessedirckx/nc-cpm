@@ -6,7 +6,6 @@ body{
 		font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue",
 		 Helvetica, Arial, "Lucida Grande", sans-serif;
 	 padding : 15px;
-	 background-image: url('https://cdn.discordapp.com/attachments/712746665752133653/827521381938757632/unknown.png');
 }
 td {
 	 padding: 10px;
@@ -34,13 +33,14 @@ function compute_obstacle_perimeter(obstacle_volume) {
 }
 
 // Parameter configuration
-let cell_volume = 500
-let obstacle_volume = cell_volume * 0.5
-let peri = compute_obstacle_perimeter(obstacle_volume)
-let obstacles = 16  						// needs to be a sqr number
+let cell_volume = 500										// Volume of a migrating cell
+let obstacle_volume = cell_volume * 0.5						// Obstacle volume, must be 0.5 * migrating cell volume
+let peri = compute_obstacle_perimeter(obstacle_volume)		// Compute obstacle perimeter based on volume to make it round
+
+let obstacles = 4											// needs to be a sqr number. E.g., 4, 9, 16, 25 etc.
 let grid_size = 200
 
-let rows = Math.sqrt(obstacles)
+let rows = Math.sqrt(obstacles)								// Compute number of rows of the grid based on the number of obstacles
 let colums = rows
 let spacing = grid_size/(rows+1)
 
@@ -138,6 +138,7 @@ function step(){
 	}
 }
 
+// This function computes the grid positions for the obstacles
 function calculate_obstacle_positions() {
 
 	let positions = new Array()
@@ -180,9 +181,6 @@ function initializeGrid(){
 
 		for( i = 0; i < nrcells[cellkind]; i++ ){
 
-			// console.log('i', i)
-			// console.log('cellkind', cellkind)
-
 			// first cell always at the midpoint. Any other cells
 			// randomly.
 
@@ -195,16 +193,11 @@ function initializeGrid(){
 				// Initialize obstacles using a regularly spaced grid
 				this.gm.seedCellAt( cellkind+1, obstacle_positions[i] )
 			}
-
-			// if( cellkind == 1 ){
-			// 	this.gm.seedCellAt( cellkind+1, this.C.midpoint )
-			// } else {
-			// 	this.gm.seedCell( cellkind+1 )
-			// }
 		}
 	}
 }
 
+// Seed a cell at a random location of the grid
 function seedCell( k ){
 	let x = sim.C.ran(0,grid_size), y = sim.C.ran(0,grid_size)
 	let cid = sim.C.makeNewCellID( k )
@@ -226,6 +219,7 @@ function seedCells(){
 	}
 }
 
+// Update the cell and obstacle volume
 function changeVolume() {
 	let newVolume = document.getElementById("changeVolume").value
 
@@ -236,16 +230,19 @@ function changeVolume() {
 	sim.C.conf.P[2] = compute_obstacle_perimeter(newVolume / 2)
 }
 
+// Update the perimeter
 function changePerimeter() {
 	let newPerimeter = document.getElementById("changePerimeter").value
 	sim.C.conf.P[1] = newPerimeter
 }
 
+// Update the obstacle-background adhesion relation
 function updateAOB() {
 	let newAOB = document.getElementById("obstacleBackground").value
 	sim.C.conf.J[2][0] = parseInt(newAOB)
 }
 
+// Update the obstacle-cell adhesion relation
 function updateAOC() {
 	let value = document.getElementById("obstacleCell").value
 	sim.C.conf.J[2][1] = parseInt(value)
@@ -287,25 +284,9 @@ function updateAOC() {
 				<button onclick="changePerimeter()">Change cell perimter!</button>
 			</td>
 		</tr>
-		<!-- <tr>
-			<td>
-				<select name="cars" id="cars">
-					<option value="4">2 x 2</option>
-					<option value="9">3 x 3</option>
-					<option value="16">4 x 4</option>
-					<option value="25">5 x 5</option>
-					<option value="36">6 x 6</option>
-					<option value="49">7 x 7</option>
-					<option value="64">8 x 8</option>
-				</select>
-			</td>
-			<td>
-				<button onclick="updateObstacles()">Update nr. of obstacles!</button>
-			</td>
-		</tr> -->
 		<tr>
 			<td>
-				<input type="text" id="obstacleBackground" value="10"></input> <!-- Watch out!!!! Could also be the other way around!! -->
+				<input type="text" id="obstacleBackground" value="10"></input>
 			</td>
 			<td>
 				<button onclick="updateAOB()">Update Adhesion Obstacle Background!</button>
