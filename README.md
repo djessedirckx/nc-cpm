@@ -5,9 +5,9 @@ This GitHub page contains an altered version of one of the Artistoo experimental
 The following files can be found in this repository:
 - ActModel.html - The only file that was altered to alter the experimental setup
 - artistoo.js - Dependency for ActModel.html
-- fpsmeter.min.js
-- slider.js
-- style.css
+- fpsmeter.min.js - Dependency for ActModel.html
+- slider.js - Dependency for ActModel.html
+- style.css - Dependency for ActModel.html
 
 In order to use the simulation one should download all files and then open ActModel.html with a modern browser, it was verified that it works in the following browsers: Chrome, Edge and Safari but it might support more browsers aswell.
 
