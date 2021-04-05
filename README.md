@@ -9,7 +9,10 @@ The following files can be found in this repository:
 - slider.js - Dependency for ActModel.html
 - style.css - Dependency for ActModel.html
 
-In order to use the simulation one should download all files and then open ActModel.html with a modern browser, it was verified that it works in the following browsers: Chrome, Edge and Safari but it might support more browsers aswell.
+In order to use the simulation one should download all files and then open ActModel.html with a modern browser, it was verified that it works in the following browsers: Chrome, Edge and Safari but it might support more browsers aswell. When opening the simulation environment it should look like the following picture:
+![EnvironmentPreview](https://user-images.githubusercontent.com/38349195/113551979-c59f2700-95f5-11eb-8cbf-3443ad406537.png)
+
+A small remark is that the environment might freeze when certain parameters are edited to be ridiculously large (e.g., 100.000 migrating cells)
 
 For questions please contact one of the following people: 
 - [Djesse Dirckx](mailto:djesse.dirckx@student.ru.nl)
