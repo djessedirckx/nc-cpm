@@ -13,7 +13,7 @@ In order to use the simulation one should download all files and then open ActMo
 
 For questions please contact one of the following people: 
 - [Djesse Dirckx](mailto:djesse.dirckx@student.ru.nl)
-- Lieuwe Meijdam(mailto:lieuwe.meijdam@student.ru.nl)
-- Marius Kästingschäfer(mailto:marius.kastingschafer@student.ru.nl)
+- [Lieuwe Meijdam](mailto:lieuwe.meijdam@student.ru.nl)
+- [Marius Kästingschäfer](mailto:marius.kastingschafer@student.ru.nl)
 
 The experiments that were conducted and the conclusions that are deduced from it are purely for educational purposes. 
